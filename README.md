@@ -1,4 +1,4 @@
-# Praktikum Komunikasi Data dan Jaringan Komputer Modul 1 - K06
+# Praktikum Komunikasi Data dan Jaringan Komputer Modul 2 - K06
 
 ## Anggota Kelompok
 | NRP | Nama |
@@ -29,4 +29,22 @@
 - [Soal 18](#soal-18)
 - [Soal 19](#soal-19)
 - [Soal 20](#soal-20)
+---
+
+## Soal 1 
+
+Di tepi Beleriand yang porak-poranda, Eonwe merentangkan tiga jalur: Barat untuk Earendil dan Elwing, Timur untuk Círdan, Elrond, Maglor, serta pelabuhan DMZ bagi Sirion, Tirion, Valmar, Lindon, Vingilot. Tetapkan alamat dan default gateway tiap tokoh sesuai glosarium yang sudah diberikan.
+
+### Penjelasan Topologi
+
+
+---
+
+## Soal 2
+
+Angin dari luar mulai berhembus ketika Eonwe membuka jalan ke awan NAT. Pastikan jalur WAN di router aktif dan NAT meneruskan trafik keluar bagi seluruh alamat internal sehingga host di dalam dapat mencapai layanan di luar menggunakan IP address.	
+
+### Penjelasan 
+
+
 ---
