@@ -34,6 +34,14 @@ echo "<p>The dynamic ship sails with PHP-FPM.</p>";
 nano /etc/nginx/sites-available/app.k06.com
 
 ##isi konfigurasi berikut:
+# Blok ini akan menangkap semua permintaan yang tidak cocok
+# dengan hostname lain, seperti akses via IP.
+server {
+    listen 80 default_server;
+    server_name _;
+    return 403; # Kembalikan error Forbidden
+}
+
 server {
     listen 80;
     server_name app.k06.com;

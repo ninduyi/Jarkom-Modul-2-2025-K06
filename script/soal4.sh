@@ -91,8 +91,6 @@ dig @192.214.3.3 k06.com
 # Bertanya ke Slave (Valmar)
 dig @192.214.3.4 k06.com
 
-# atau ping k06.com
-ping k06.com
 
 
 
