@@ -958,9 +958,6 @@ Menguji apakah blok server default berhasil memblokir akses via IP langsung, ses
 ## Soal 11
 Di muara sungai, Sirion berdiri sebagai reverse proxy. Terapkan path-based routing: /static → Lindon dan /app → Vingilot, sambil meneruskan header Host dan X-Real-IP ke backend. Pastikan Sirion menerima www.<xxxx>.com (kanonik) dan sirion.<xxxx>.com, dan bahwa konten pada /static dan /app di-serve melalui backend yang tepat.
 
-```bash
-
-```
 ### Penjelasan
 Soal nomor 11 membahas konfigurasi reverse proxy menggunakan Nginx pada server Sirion. Dalam skenario ini, Sirion berfungsi sebagai gerbang yang meneruskan permintaan pengguna ke dua server backend berbeda berdasarkan jalur akses. Permintaan dengan path /static diteruskan ke server Lindon yang menyediakan konten statis, sedangkan path /app diteruskan ke server Vingilot yang menjalankan aplikasi dinamis berbasis PHP. Header Host dan X-Real-IP diteruskan agar backend tetap mengetahui hostname dan alamat IP asli pengguna. Selain itu, Sirion dikonfigurasi untuk menerima domain www.k06.com dan sirion.k06.com, sehingga seluruh permintaan melalui hostname tersebut diatur dan diarahkan ke layanan yang sesuai.
 
@@ -1074,6 +1071,99 @@ curl http://www.k06.com/app/
 ![WhatsApp Image 2025-10-20 at 16 58 47_37abdf78](https://github.com/user-attachments/assets/f354dcd0-346c-4461-b342-58a5c30cac3f)  
 
 ![WhatsApp Image 2025-10-20 at 16 20 21_6b93070a](https://github.com/user-attachments/assets/2324c44b-f496-4d50-9f43-ca7e64baecdc)  
+
+## Soal 12
+Ada kamar kecil di balik gerbang yakni /admin. Lindungi path tersebut di Sirion menggunakan Basic Auth, akses tanpa kredensial harus ditolak dan akses dengan kredensial yang benar harus diizinkan.
+
+### Penjelasan
+Soal ini berfokus pada penerapan **Basic Authentication (Basic Auth)** di server Sirion menggunakan Nginx untuk melindungi path `/admin`. Artinya, ketika pengguna mencoba mengakses halaman `/admin`, server akan meminta kredensial (username dan password) sebelum mengizinkan akses. Jika pengguna tidak memberikan kredensial atau memberikan data yang salah, akses akan ditolak (HTTP 401 Unauthorized), sementara jika kredensialnya benar, halaman akan terbuka (HTTP 200 OK). Konfigurasi ini biasanya dilakukan dengan menambahkan direktif `auth_basic` dan `auth_basic_user_file` di blok `location /admin/`, serta membuat file `.htpasswd` berisi username dan password terenkripsi sebagai daftar pengguna yang diizinkan.
+
+### Langkah-langkah konfigurasi
+### 1. Buka node sirion dan lakukan command berikut:
+   ```bash
+     apt install apache2-utils -y
+   ```
+### 2. Buat file password pada direktori berikut dan ketik password (misal: komdat25):  
+   ```bash
+     htpasswd -c /etc/nginx/.htpasswd admin
+   ```
+### 3. Edit konfigurasi Nginx
+   ```bash
+     nano /etc/nginx/sites-available/www.k06.com
+   ```
+  Tambah code berikut ini:
+     ```
+     
+    server {
+    listen 80;
+    server_name www.k06.com sirion.k06.com;
+
+    # Forward /static ke Lindon (web statis)
+    location /static/ {
+        proxy_pass http://192.214.3.5/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Forward /app ke Vingilot (web dinamis)
+    location /app/ {
+        proxy_pass http://192.214.3.6/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Area admin (terpisah, tidak di dalam /static)
+    location /admin/ {
+        auth_basic "Restricted Area";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        root /var/www/html;
+        index index.html;
+    }
+
+    # Halaman utama di Sirion
+    location / {
+        return 200 "<h1>War of Wrath: Lindon bertahan</h1>
+        <a href='/app/'>Go to App</a><br>
+        <a href='/static/'>Go to Static</a><br>
+        <a href='/admin/'>Admin</a>";
+        add_header Content-Type text/html;
+       }
+    }
+    
+
+### 4. Buat file html admin
+```
+  
+mkdir -p /var/www/html/admin
+echo "<h1>Welcome, Administrator</h1>" > /var/www/html/admin/index.html
+```
+### 5. Tes Konfigurasi dan reload nginx
+```
+nginx -t
+```
+# Kalau hasilnya:
+```
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+#Maka:
+```
+nginx -s reload
+```
+### 6. Tes dari client (misal Elwing)
+# Tanpa login
+curl -i http://www.k06.com/admin/
+#Hasil:
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Basic realm="Restricted Area"
+
+# Login yang benar:
+```
+curl -i -u admin:komdat25 http://www.k06.com/admin/
+```
+
+#Hasil:
+HTTP/1.1 200 OK
+<h1>Welcome, Administrator</h1>
 
 
 
