@@ -955,5 +955,126 @@ curl http://192.214.3.6/
 ```
 Menguji apakah blok server default berhasil memblokir akses via IP langsung, sesuai dengan persyaratan keamanan.
 
+## Soal 11
+Di muara sungai, Sirion berdiri sebagai reverse proxy. Terapkan path-based routing: /static → Lindon dan /app → Vingilot, sambil meneruskan header Host dan X-Real-IP ke backend. Pastikan Sirion menerima www.<xxxx>.com (kanonik) dan sirion.<xxxx>.com, dan bahwa konten pada /static dan /app di-serve melalui backend yang tepat.
+
+```bash
+
+```
+### Penjelasan
+Soal nomor 11 membahas konfigurasi reverse proxy menggunakan Nginx pada server Sirion. Dalam skenario ini, Sirion berfungsi sebagai gerbang yang meneruskan permintaan pengguna ke dua server backend berbeda berdasarkan jalur akses. Permintaan dengan path /static diteruskan ke server Lindon yang menyediakan konten statis, sedangkan path /app diteruskan ke server Vingilot yang menjalankan aplikasi dinamis berbasis PHP. Header Host dan X-Real-IP diteruskan agar backend tetap mengetahui hostname dan alamat IP asli pengguna. Selain itu, Sirion dikonfigurasi untuk menerima domain www.k06.com dan sirion.k06.com, sehingga seluruh permintaan melalui hostname tersebut diatur dan diarahkan ke layanan yang sesuai.
+
+### Langkah-langkah konfigurasi
+### 1. Buka node sirion dan lakukan command berikut:
+   ```bash
+    apt update
+    apt install nginx -y
+   ```
+### 2. Buat Konfigurasi situs di reverse proxy
+   ```bash
+   nano /etc/nginx/sites-available/www.k06.com
+   ```
+   
+   Isi dengan konfigurasi berikut
+   ```bash
+    server {
+    listen 80;
+    server_name www.k06.com sirion.k06.com;
+
+    # Forward /static ke Lindon (web statis)
+    location /static/ {
+        proxy_pass http://192.214.3.5/;  # Lindon
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Forward /app ke Vingilot (web dinamis)
+    location /app/ {
+        proxy_pass http://192.214.3.6/;  # Vingilot
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Halaman utama di Sirion
+    location / {
+        return 200 "<h1>War of Wrath: Lindon bertahan</h1><a href='/app/'>Go to App</a><br><a href='/static/'>Go to Static</a>";
+        add_header Content-Type text/html;
+    }
+   }
+   ```
+### 3. Pada node vingilot lakukan ini:
+```bash
+    nano /etc/nginx/sites-available/www.k06.com
+```
+
+```bash
+  server {
+    listen 80 default_server;
+    server_name app.k06.com www.k06.com;
+    root /var/www/app.k06.com;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location /about {
+        rewrite ^/about$ /about.php last;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+### 4. Pada node Lindon lakukan ini
+```bash
+   nano /etc/nginx/sites-available/www.k06.com
+```
+
+```bash
+server {
+    listen 80 default_server;
+    server_name static.k06.com www.k06.com;
+    root /var/www/html;
+    index index.html index.htm;
+
+    # Folder annals dengan autoindex
+    location /annals/ {
+        autoindex on;
+    }
+
+    # Optional: tampilkan pesan kalau index tidak ada
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+### 5. Aktifkan situs dan reload Nginx
+
+```bash
+ln -s /etc/nginx/sites-available/www.k06.com /etc/nginx/sites-enabled/
+nginx -t
+nginx -s reload
+```
+
+### 6. Uji Coba dari klien contohnya Elrond:
+Pastikan terlebih dahulu klien pakai DNS internal (/etc/resolv.conf mengarah ke 192.214.3.3 dan 192.214.3.4).
+```bash
+curl http://www.k06.com/
+curl http://www.k06.com/static/
+curl http://www.k06.com/app/
+```
+![WhatsApp Image 2025-10-20 at 16 58 47_37abdf78](https://github.com/user-attachments/assets/f354dcd0-346c-4461-b342-58a5c30cac3f)  
+
+![WhatsApp Image 2025-10-20 at 16 20 21_6b93070a](https://github.com/user-attachments/assets/2324c44b-f496-4d50-9f43-ca7e64baecdc)  
+
+
 
 ---
