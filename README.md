@@ -1162,9 +1162,10 @@ curl -i -u admin:komdat25 http://www.k06.com/admin/
 ```
 
 ### Hasil:
+```
 HTTP/1.1 200 OK
 <h1>Welcome, Administrator</h1>
-
+```
 
 
 ---
