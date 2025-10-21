@@ -1141,11 +1141,11 @@ echo "<h1>Welcome, Administrator</h1>" > /var/www/html/admin/index.html
 ```
 nginx -t
 ```
-# Kalau hasilnya:
+### Kalau hasilnya:
 ```
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
-#Maka:
+### Maka:
 ```
 nginx -s reload
 ```
@@ -1156,12 +1156,12 @@ curl -i http://www.k06.com/admin/
 HTTP/1.1 401 Unauthorized
 WWW-Authenticate: Basic realm="Restricted Area"
 
-# Login yang benar:
+### Login yang benar:
 ```
 curl -i -u admin:komdat25 http://www.k06.com/admin/
 ```
 
-#Hasil:
+### Hasil:
 HTTP/1.1 200 OK
 <h1>Welcome, Administrator</h1>
 
