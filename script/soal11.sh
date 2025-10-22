@@ -1,97 +1,52 @@
-## DI SIRION
+# ==================================
+# ===== DI NODE SIRION (SEMUA) =====
+# ==================================
 
-## Install nginx terlebih dahulu di sirion
+# 1. Install Nginx
 apt update
 apt install nginx -y
 
-## Buat Konfigurasi situs di reverse proxy
+# 2. Buat Konfigurasi Virtual Host untuk Reverse Proxy
 nano /etc/nginx/sites-available/www.k06.com
 
-## isi dengan konfig berikut:
+# == ISI FILE DENGAN KONFIGURASI DI BAWAH INI ==
+# Konfigurasi ini membuat Sirion menjadi "penerjemah"
 server {
     listen 80;
     server_name www.k06.com sirion.k06.com;
 
-    # Forward /static ke Lindon (web statis)
-    location /static/ {
-        proxy_pass http://192.214.3.5/;  # Lindon
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    # Forward /app ke Vingilot (web dinamis)
-    location /app/ {
-        proxy_pass http://192.214.3.6/;  # Vingilot
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    # Halaman utama di Sirion
+    # Halaman utama yang disajikan oleh Sirion sendiri
     location / {
         return 200 "<h1>War of Wrath: Lindon bertahan</h1><a href='/app/'>Go to App</a><br><a href='/static/'>Go to Static</a>";
         add_header Content-Type text/html;
     }
-}
 
-## Lakukan ini pada Vingilot
-nano /etc/nginx/sites-available/www.k06.com
-
-server {
-    listen 80 default_server;
-    server_name app.k06.com www.k06.com;
-    root /var/www/app.k06.com;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$args;
+    # Forward permintaan /static/ ke Lindon
+    location /static/ {
+        proxy_pass http://192.214.3.5/;  # IP Lindon
+        # PENTING: Ubah Host header agar Lindon menerima permintaan ini
+        proxy_set_header Host static.k06.com;
     }
 
-    location /about {
-        rewrite ^/about$ /about.php last;
-    }
 
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
-    }
-
-    location ~ /\.ht {
-        deny all;
+    # Forward permintaan /app/ ke Vingilot
+    location /app/ {
+        proxy_pass http://192.214.3.6/;  # IP Vingilot
+        # PENTING: Ubah Host header agar Vingilot menerima permintaan ini
+        proxy_set_header Host app.k06.com;
     }
 }
+# == SELESAI MENGISI FILE ==
 
-## Lakukan ini pada Lindon
-nano /etc/nginx/sites-available/www.k06.com
-
-server {
-    listen 80 default_server;
-    server_name static.k06.com www.k06.com;
-    root /var/www/html;
-    index index.html index.htm;
-
-    # Folder annals dengan autoindex
-    location /annals/ {
-        autoindex on;
-    }
-
-    # Optional: tampilkan pesan kalau index tidak ada
-    location / {
-        try_files $uri $uri/ =404;
-    }
-}
-
-
-
-## Aktifkan situs dan reload Nginx
+# 3. Aktifkan Situs Baru dan Nonaktifkan Situs Default
 ln -s /etc/nginx/sites-available/www.k06.com /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+
+# 4. Cek Sintaks dan Restart Nginx
 nginx -t
-nginx -s reload
+service nginx restart
 
-
-## Uji dari Klien (misal Elrond)
-## Pastikan klien pakai DNS internal (/etc/resolv.conf mengarah ke 192.214.3.3 dan 192.214.3.4).
-## Kemudian coba:
+# Menguji di misalnya Elrond
 curl http://www.k06.com/
 curl http://www.k06.com/static/
 curl http://www.k06.com/app/
-

@@ -1,11 +1,7 @@
 ## DI TIRION
 nano /etc/bind/jarkom/k06.com
 
-# Cari bagian:
-lindon  IN  A  192.214.3.5
-static  IN  CNAME  lindon.k06.com.
-
-## Ubah jadi 
+#### Ubah jadi
 $TTL    604800
 @       IN      SOA     ns1.k06.com. root.k06.com. (
                         2025101301      ; Serial (YYYYMMDDXX) - NAIKKAN!
@@ -48,12 +44,12 @@ www        IN  CNAME  sirion.k06.com.
 static     30  IN  CNAME  lindon.k06.com.   ; TTL 30 detik agar ikut TTL Lindon
 app        IN  CNAME  vingilot.k06.com.
 
-## DI VALMAR
+### DI VALMAR
 ls -l /var/lib/bind/
 dig @192.214.3.4 lindon.k06.com
-# Output-nya harus sudah menunjuk ke 192.214.3.50.
+### Output-nya harus sudah menunjuk ke 192.214.3.50.
 
-## Cek dari klien (misal Elwing)
+### Cek dari klien (misal Elwing)
 dig static.k06.com
 
 

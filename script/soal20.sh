@@ -1,7 +1,10 @@
-# Konfigurasi di Sirion (Reverse Proxy)
+## Soal 20
+### Konfigurasi di Sirion (Reverse Proxy)
+```
 nano /etc/nginx/sites-available/www.k06.com
-
-# Konfig 
+```
+### Konfig
+``` 
 # ===============================
 # Redirect dari IP & sirion.<xxxx>.com → www.<xxxx>.com
 # ===============================
@@ -53,31 +56,39 @@ server {
         try_files $uri $uri/ =404;
     }
 }
+```
 
-
-# Aktifkan & Reload Nginx
+### Aktifkan & Reload Nginx
+```
 ln -sf /etc/nginx/sites-available/www.k06.com /etc/nginx/sites-enabled/
 nginx -t
 nginx -s reload
-# Output yang benar
+```
+### Output yang benar
+```
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
-
-# Verifikasi dari Seluruh Klien
+```
+### Verifikasi dari Seluruh Klien
+```
 cat /etc/resolv.conf
-# Hasilnya harus mengarah ke:
+```
+### Hasilnya harus mengarah ke:
+```
 nameserver 192.214.3.3
 nameserver 192.214.3.4
-
-# Uji dari Elwing
+```
+### Uji dari Elwing
+```
 ping -c 3 www.k06.com
 curl http://www.k06.com/
 curl http://www.k06.com/app/
 curl http://www.k06.com/static/
-
-# Uji dari Earendil
+```
+### Uji dari Earendil
+```
 ping -c 3 www.k06.com
 curl http://www.k06.com/
 curl http://www.k06.com/app/
 curl http://www.k06.com/static/
-
+```

@@ -62,6 +62,7 @@ nginx -t
 nginx -s reload
 
 ## Tes dari Elwing
+
 curl -I http://192.214.3.2/
 ## Hasil:
 HTTP/1.1 301 Moved Permanently

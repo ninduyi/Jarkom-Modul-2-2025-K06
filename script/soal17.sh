@@ -1,7 +1,9 @@
-## buat file
+##Soal 17
+### buat file
 nano /root/start-services.sh
 
-## isi dengan
+### isi dengan
+```
 #!/bin/bash
 echo "=== Memulai layanan inti K06 ==="
 
@@ -61,26 +63,32 @@ vingilot)
 esac
 
 echo "[OK] Semua layanan inti ($HOST) aktif."
-
-## ubah permission 
+```
+### ubah permission 
+```
 chmod +x /root/start-services.sh
-
-## Jalankan otomatis saat WSL startup
+```
+### Jalankan otomatis saat WSL startup
+```
 echo "bash /root/start-services.sh" >> /etc/bash.bashrc
+```
 
+### TUTUP SEMUA WSL
 
-## TUTUP SEMUA WSL
+### start tirion
 
-## start tirion
-
-## Untuk tirion/valmar
+### Untuk tirion/valmar
+```
 ps aux | grep named
 dig @localhost k06.com
-
-## untuk sirion/lindon
+```
+### untuk sirion/lindon
+```
 ps aux | grep nginx
 curl http://www.k06.com/
-
-## untuk vingilot
+```
+### untuk vingilot
+```
 ps aux | grep php
 curl http://app.k06.com/
+```
