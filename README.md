@@ -1321,7 +1321,91 @@ real_ip_header X-Real-IP;
 real_ip_recursive on;
 
 #### KONFIG VINGILOT
+```
 server {
+    listen 80;
+    server_name app.k06.com;
+
+    root /var/www/app.k06.com;
+    index index.php;
+
+    # -------------------------------
+    # Halaman utama
+    # -------------------------------
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # -------------------------------
+    # Rewrite untuk /about tanpa .php
+    # -------------------------------
+    location /about {
+        rewrite ^/about$ /about.php last;
+    }
+
+    # -------------------------------
+    # PHP-FPM (jalankan file .php)
+    # -------------------------------
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+
+        # Tambahan agar IP asli juga diteruskan ke PHP
+        fastcgi_param REMOTE_ADDR $remote_addr;
+        fastcgi_param X-Real-IP $remote_addr;
+    }
+
+    # -------------------------------
+    # Keamanan (blok file tersembunyi)
+    # -------------------------------
+    location ~ /\.ht {
+        deny all;
+    }
+
+    # -------------------------------
+    # Logging
+    # -------------------------------
+    access_log /var/log/nginx/app.k06.com.access.log;
+    error_log /var/log/nginx/app.k06.com.error.log;
+}
+```
+
+## Soal 15
+### Instalasi ApacheBench di Elrond
+```
+apt update
+```
+```
+apt install apache2-utils -y
+```
+### Jalankan Pengujian ke Endpoint /app/ dan /static/
+### Uji ke /app/ (Vingilot via Sirion)
+```
+ab -n 500 -c 10 http://www.k06.com/app/
+```
+### Uji ke /static/ (Lindon via Sirion)
+```
+ab -n 500 -c 10 http://www.k06.com/static/
+```
+### Hasil yang Diharapkan
+```
+Server Software:        nginx
+Server Hostname:        www.k06.com
+Server Port:            80
+
+Document Path:          /app/
+Document Length:        120 bytes
+
+Concurrency Level:      10
+Time taken for tests:   1.543 seconds
+Complete requests:      500
+Failed requests:        0
+Total transferred:      95000 bytes
+Requests per second:    324.10 [#/sec] (mean)
+Time per request:       30.86 [ms] (mean)
+Transfer rate:          60.23 [Kbytes/sec] received
+
+```
 
 ## Soal 16
 ### DI TIRION
@@ -1435,32 +1519,3 @@ dig static.k06.com
     access_log /var/log/nginx/app.k06.com.access.log;
     error_log /var/log/nginx/app.k06.com.error.log;
 }
-
-## Soal 15
-### Instalasi ApacheBench di Elrond
-apt update
-apt install apache2-utils -y
-
-### Jalankan Pengujian ke Endpoint /app/ dan /static/
-### Uji ke /app/ (Vingilot via Sirion)
-ab -n 500 -c 10 http://www.k06.com/app/
-
-### Uji ke /static/ (Lindon via Sirion)
-ab -n 500 -c 10 http://www.k06.com/static/
-### Hasil yang Diharapkan
-Server Software:        nginx
-Server Hostname:        www.k06.com
-Server Port:            80
-
-Document Path:          /app/
-Document Length:        120 bytes
-
-Concurrency Level:      10
-Time taken for tests:   1.543 seconds
-Complete requests:      500
-Failed requests:        0
-Total transferred:      95000 bytes
-Requests per second:    324.10 [#/sec] (mean)
-Time per request:       30.86 [ms] (mean)
-Transfer rate:          60.23 [Kbytes/sec] received
-
