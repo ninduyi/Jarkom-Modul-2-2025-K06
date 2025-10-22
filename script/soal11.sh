@@ -33,13 +33,60 @@ server {
     }
 }
 
+## Lakukan ini pada Vingilot
+nano /etc/nginx/sites-available/www.k06.com
+
+server {
+    listen 80 default_server;
+    server_name app.k06.com www.k06.com;
+    root /var/www/app.k06.com;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location /about {
+        rewrite ^/about$ /about.php last;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+
+## Lakukan ini pada Lindon
+nano /etc/nginx/sites-available/www.k06.com
+
+server {
+    listen 80 default_server;
+    server_name static.k06.com www.k06.com;
+    root /var/www/html;
+    index index.html index.htm;
+
+    # Folder annals dengan autoindex
+    location /annals/ {
+        autoindex on;
+    }
+
+    # Optional: tampilkan pesan kalau index tidak ada
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+
+
 ## Aktifkan situs dan reload Nginx
 ln -s /etc/nginx/sites-available/www.k06.com /etc/nginx/sites-enabled/
 nginx -t
 nginx -s reload
 
-## Jalankan Nginx di SIrion
-nginx
 
 ## Uji dari Klien (misal Elrond)
 ## Pastikan klien pakai DNS internal (/etc/resolv.conf mengarah ke 192.214.3.3 dan 192.214.3.4).

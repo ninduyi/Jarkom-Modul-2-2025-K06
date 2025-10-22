@@ -960,5 +960,829 @@ curl http://192.214.3.6/
 ```
 Menguji apakah blok server default berhasil memblokir akses via IP langsung, sesuai dengan persyaratan keamanan.
 
+## Soal 11
+Di muara sungai, Sirion berdiri sebagai reverse proxy. Terapkan path-based routing: /static → Lindon dan /app → Vingilot, sambil meneruskan header Host dan X-Real-IP ke backend. Pastikan Sirion menerima www.<xxxx>.com (kanonik) dan sirion.<xxxx>.com, dan bahwa konten pada /static dan /app di-serve melalui backend yang tepat.
+
+### Penjelasan
+Soal nomor 11 membahas konfigurasi reverse proxy menggunakan Nginx pada server Sirion. Dalam skenario ini, Sirion berfungsi sebagai gerbang yang meneruskan permintaan pengguna ke dua server backend berbeda berdasarkan jalur akses. Permintaan dengan path /static diteruskan ke server Lindon yang menyediakan konten statis, sedangkan path /app diteruskan ke server Vingilot yang menjalankan aplikasi dinamis berbasis PHP. Header Host dan X-Real-IP diteruskan agar backend tetap mengetahui hostname dan alamat IP asli pengguna. Selain itu, Sirion dikonfigurasi untuk menerima domain www.k06.com dan sirion.k06.com, sehingga seluruh permintaan melalui hostname tersebut diatur dan diarahkan ke layanan yang sesuai.
+
+### Langkah-langkah konfigurasi
+### 1. Buka node sirion dan lakukan command berikut:
+   ```bash
+    apt update
+    apt install nginx -y
+   ```
+### 2. Buat Konfigurasi situs di reverse proxy
+   ```bash
+   nano /etc/nginx/sites-available/www.k06.com
+   ```
+   
+   Isi dengan konfigurasi berikut
+   ```bash
+    server {
+    listen 80;
+    server_name www.k06.com sirion.k06.com;
+
+    # Forward /static ke Lindon (web statis)
+    location /static/ {
+        proxy_pass http://192.214.3.5/;  # Lindon
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Forward /app ke Vingilot (web dinamis)
+    location /app/ {
+        proxy_pass http://192.214.3.6/;  # Vingilot
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Halaman utama di Sirion
+    location / {
+        return 200 "<h1>War of Wrath: Lindon bertahan</h1><a href='/app/'>Go to App</a><br><a href='/static/'>Go to Static</a>";
+        add_header Content-Type text/html;
+    }
+   }
+   ```
+### 3. Pada node vingilot lakukan ini:
+```bash
+    nano /etc/nginx/sites-available/www.k06.com
+```
+
+```bash
+  server {
+    listen 80 default_server;
+    server_name app.k06.com www.k06.com;
+    root /var/www/app.k06.com;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location /about {
+        rewrite ^/about$ /about.php last;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+### 4. Pada node Lindon lakukan ini
+```bash
+   nano /etc/nginx/sites-available/www.k06.com
+```
+
+```bash
+server {
+    listen 80 default_server;
+    server_name static.k06.com www.k06.com;
+    root /var/www/html;
+    index index.html index.htm;
+
+    # Folder annals dengan autoindex
+    location /annals/ {
+        autoindex on;
+    }
+
+    # Optional: tampilkan pesan kalau index tidak ada
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+### 5. Aktifkan situs dan reload Nginx
+
+```bash
+ln -s /etc/nginx/sites-available/www.k06.com /etc/nginx/sites-enabled/
+nginx -t
+nginx -s reload
+```
+
+### 6. Uji Coba dari klien contohnya Elrond:
+Pastikan terlebih dahulu klien pakai DNS internal (/etc/resolv.conf mengarah ke 192.214.3.3 dan 192.214.3.4).
+```bash
+curl http://www.k06.com/
+curl http://www.k06.com/static/
+curl http://www.k06.com/app/
+```
+![WhatsApp Image 2025-10-20 at 16 58 47_37abdf78](https://github.com/user-attachments/assets/f354dcd0-346c-4461-b342-58a5c30cac3f)  
+
+![WhatsApp Image 2025-10-20 at 16 20 21_6b93070a](https://github.com/user-attachments/assets/2324c44b-f496-4d50-9f43-ca7e64baecdc)  
+
+## Soal 12
+Ada kamar kecil di balik gerbang yakni /admin. Lindungi path tersebut di Sirion menggunakan Basic Auth, akses tanpa kredensial harus ditolak dan akses dengan kredensial yang benar harus diizinkan.
+
+### Penjelasan
+Soal ini berfokus pada penerapan **Basic Authentication (Basic Auth)** di server Sirion menggunakan Nginx untuk melindungi path `/admin`. Artinya, ketika pengguna mencoba mengakses halaman `/admin`, server akan meminta kredensial (username dan password) sebelum mengizinkan akses. Jika pengguna tidak memberikan kredensial atau memberikan data yang salah, akses akan ditolak (HTTP 401 Unauthorized), sementara jika kredensialnya benar, halaman akan terbuka (HTTP 200 OK). Konfigurasi ini biasanya dilakukan dengan menambahkan direktif `auth_basic` dan `auth_basic_user_file` di blok `location /admin/`, serta membuat file `.htpasswd` berisi username dan password terenkripsi sebagai daftar pengguna yang diizinkan.
+
+### Langkah-langkah konfigurasi
+### 1. Buka node sirion dan lakukan command berikut:
+   ```bash
+     apt install apache2-utils -y
+   ```
+### 2. Buat file password pada direktori berikut dan ketik password (misal: komdat25):  
+   ```bash
+     htpasswd -c /etc/nginx/.htpasswd admin
+   ```
+### 3. Edit konfigurasi Nginx
+   ```bash
+     nano /etc/nginx/sites-available/www.k06.com
+   ```
+  Tambah code berikut ini:
+     ```
+     
+    server {
+    listen 80;
+    server_name www.k06.com sirion.k06.com;
+
+    # Forward /static ke Lindon (web statis)
+    location /static/ {
+        proxy_pass http://192.214.3.5/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Forward /app ke Vingilot (web dinamis)
+    location /app/ {
+        proxy_pass http://192.214.3.6/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Area admin (terpisah, tidak di dalam /static)
+    location /admin/ {
+        auth_basic "Restricted Area";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        root /var/www/html;
+        index index.html;
+    }
+
+    # Halaman utama di Sirion
+    location / {
+        return 200 "<h1>War of Wrath: Lindon bertahan</h1>
+        <a href='/app/'>Go to App</a><br>
+        <a href='/static/'>Go to Static</a><br>
+        <a href='/admin/'>Admin</a>";
+        add_header Content-Type text/html;
+       }
+    }
+    
+
+### 4. Buat file html admin
+```
+  
+mkdir -p /var/www/html/admin
+echo "<h1>Welcome, Administrator</h1>" > /var/www/html/admin/index.html
+```
+### 5. Tes Konfigurasi dan reload nginx
+```
+nginx -t
+```
+### Kalau hasilnya:
+```
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+### Maka:
+```
+nginx -s reload
+```
+### 6. Tes dari client (misal Elwing)
+# Tanpa login
+curl -i http://www.k06.com/admin/
+#Hasil:
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Basic realm="Restricted Area"
+
+### Login yang benar:
+```
+curl -i -u admin:komdat25 http://www.k06.com/admin/
+```
+
+### Hasil:
+```
+HTTP/1.1 200 OK
+<h1>Welcome, Administrator</h1>
+```
+
 
 ---
+
+## 13. Soal 13
+
+### 1. Edit Konfigurasi di Sirion
+```
+
+# Tambahkan berikut:
+# ===============================
+# 1. REDIRECT SERVER BLOCK
+# ===============================
+server {
+    listen 80;
+    server_name 192.214.3.2 sirion.k06.com;
+
+    # Redirect semua request ke nama kanonik
+    return 301 http://www.k06.com$request_uri;
+}
+
+# ===============================
+# 2. MAIN SERVER (KANONIK)
+# ===============================
+server {
+    listen 80;
+    server_name www.k06.com;
+
+    # Forward /static ke Lindon
+    location /static/ {
+        proxy_pass http://192.214.3.5/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Forward /app ke Vingilot
+    location /app/ {
+        proxy_pass http://192.214.3.6/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Halaman utama
+    location / {
+        default_type text/html;
+        return 200 "<h1>War of Wrath: Lindon bertahan</h1>
+        <a href='/app/'>Go to App</a><br>
+        <a href='/static/'>Go to Static</a><br>
+        <a href='/admin/'>Admin</a>";
+    }
+
+    # Admin area (dilindungi)
+    location = /admin {
+        return 301 /admin/;
+    }
+
+    location /admin/ {
+        auth_basic "Restricted Area";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        root /var/www/html;
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+### Reload
+```
+nginx -t
+nginx -s reload
+```
+
+### 2. Tes dari Elwing
+```
+curl -I http://192.214.3.2/##
+```
+
+Output:
+```
+HTTP/1.1 301 Moved Permanently
+Location: http://www.k06.com/
+```
+
+### Akses lewat sirion.k06.com
+```
+curl -I http://sirion.k06.com/
+```
+
+###  Hasil
+```
+HTTP/1.1 301 Moved Permanently
+Location: http://www.k06.com/
+```
+### Akses lewat k06.com
+```
+curl -I http://www.k06.com/
+```
+Output:
+```
+HTTP/1.1 200 OK
+```
+
+## Soal 14
+### Konfigurasi di Sirion (Reverse Proxy)
+```
+nano /etc/nginx/sites-available/www.k06.com
+```
+
+### Pastikan setiap blok proxy_pass (yaitu /app/ dan /static/) menyertakan header ini:
+```
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Host $host;
+```
+### Jadi blok /app/ di Sirion seharusnya jadi seperti ini:
+```
+location /app/ {
+    proxy_pass http://192.214.3.6/;  # Vingilot
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $host;
+}
+```
+### Reload
+```
+nginx -t
+nginx -s reload
+```
+### Konfigurasi di Vingilot
+```
+nano /etc/nginx/nginx.conf
+```
+### Cari blok http { ... } di bagian atas, dan tambahkan / ubah baris ini di dalamnya:
+```
+http {
+    log_format main '$http_x_real_ip - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+
+    ...
+}
+```
+
+
+### Pastikan Nginx tahu bahwa Sirion adalah proxy tepercaya
+### supaya access_log mencatat IP klien asli (bukan IP Sirion)
+set_real_ip_from 192.214.3.2;    # IP Sirion (reverse proxy)
+real_ip_header X-Real-IP;
+real_ip_recursive on;
+
+#### KONFIG VINGILOT
+```
+server {
+    listen 80;
+    server_name app.k06.com;
+
+    root /var/www/app.k06.com;
+    index index.php;
+
+    # -------------------------------
+    # Halaman utama
+    # -------------------------------
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # -------------------------------
+    # Rewrite untuk /about tanpa .php
+    # -------------------------------
+    location /about {
+        rewrite ^/about$ /about.php last;
+    }
+
+    # -------------------------------
+    # PHP-FPM (jalankan file .php)
+    # -------------------------------
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+
+        # Tambahan agar IP asli juga diteruskan ke PHP
+        fastcgi_param REMOTE_ADDR $remote_addr;
+        fastcgi_param X-Real-IP $remote_addr;
+    }
+
+    # -------------------------------
+    # Keamanan (blok file tersembunyi)
+    # -------------------------------
+    location ~ /\.ht {
+        deny all;
+    }
+
+    # -------------------------------
+    # Logging
+    # -------------------------------
+    access_log /var/log/nginx/app.k06.com.access.log;
+    error_log /var/log/nginx/app.k06.com.error.log;
+}
+```
+
+## Soal 15
+### Instalasi ApacheBench di Elrond
+```
+apt update
+```
+```
+apt install apache2-utils -y
+```
+### Jalankan Pengujian ke Endpoint /app/ dan /static/
+### Uji ke /app/ (Vingilot via Sirion)
+```
+ab -n 500 -c 10 http://www.k06.com/app/
+```
+### Uji ke /static/ (Lindon via Sirion)
+```
+ab -n 500 -c 10 http://www.k06.com/static/
+```
+### Hasil yang Diharapkan
+```
+Server Software:        nginx
+Server Hostname:        www.k06.com
+Server Port:            80
+
+Document Path:          /app/
+Document Length:        120 bytes
+
+Concurrency Level:      10
+Time taken for tests:   1.543 seconds
+Complete requests:      500
+Failed requests:        0
+Total transferred:      95000 bytes
+Requests per second:    324.10 [#/sec] (mean)
+Time per request:       30.86 [ms] (mean)
+Transfer rate:          60.23 [Kbytes/sec] received
+
+```
+
+## Soal 16
+### DI TIRION
+```
+nano /etc/bind/jarkom/k06.com
+```
+
+#### Ubah jadi
+```
+$TTL    604800
+@       IN      SOA     ns1.k06.com. root.k06.com. (
+                        2025101301      ; Serial (YYYYMMDDXX) - NAIKKAN!
+                        604800          ; Refresh
+                        86400           ; Retry
+                        2419200         ; Expire
+                        604800 )        ; Negative Cache TTL
+;
+
+; ================================
+;  NS RECORDS (DNS Servers)
+; ================================
+@       IN      NS      ns1.k06.com.
+@       IN      NS      ns2.k06.com.
+
+; ================================
+;  A RECORDS (Alamat IP)
+; ================================
+@       IN      A       192.214.3.2     ; k06.com -> IP Sirion
+ns1     IN      A       192.214.3.3     ; ns1.k06.com -> IP Tirion (Master)
+ns2     IN      A       192.214.3.4     ; ns2.k06.com -> IP Valmar (Slave)
+
+; ================================
+;  HOSTNAME RECORDS
+; ================================
+eonwe      IN  A  192.214.1.1
+earendil   IN  A  192.214.1.2
+elwing     IN  A  192.214.1.3
+cirdan     IN  A  192.214.2.2
+elrond     IN  A  192.214.2.3
+maglor     IN  A  192.214.2.4
+sirion     IN  A  192.214.3.2
+lindon     30  IN  A  192.214.3.50      ; IP baru untuk Lindon, TTL 30 detik
+vingilot   IN  A  192.214.3.6
+
+; ================================
+;  CNAME (Alias)
+; ================================
+www        IN  CNAME  sirion.k06.com.
+static     30  IN  CNAME  lindon.k06.com.   ; TTL 30 detik agar ikut TTL Lindon
+app        IN  CNAME  vingilot.k06.com.
+```
+### DI VALMAR
+```
+ls -l /var/lib/bind/
+```
+```
+dig @192.214.3.4 lindon.k06.com
+```
+### Output-nya harus sudah menunjuk ke 192.214.3.50.
+
+### Cek dari klien (misal Elwing)
+```
+dig static.k06.com
+```
+
+## Soal 17
+### buat file
+nano /root/start-services.sh
+
+### isi dengan
+```
+#!/bin/bash
+echo "=== Memulai layanan inti K06 ==="
+
+HOST=$(hostname)
+
+case "$HOST" in
+
+# ------------------------------------
+# Tirion (DNS Master)
+# ------------------------------------
+tirion)
+    echo "[Tirion] Menyalakan BIND9 (Master DNS)..."
+    mkdir -p /var/cache/bind /etc/bind/jarkom
+    pkill named 2>/dev/null
+    named -c /etc/bind/named.conf -g &
+    ;;
+
+# ------------------------------------
+# Valmar (DNS Slave)
+# ------------------------------------
+valmar)
+    echo "[Valmar] Menyalakan BIND9 (Slave DNS)..."
+    mkdir -p /var/lib/bind
+    pkill named 2>/dev/null
+    named -c /etc/bind/named.conf -g &
+    ;;
+
+# ------------------------------------
+# Sirion (Reverse Proxy)
+# ------------------------------------
+sirion)
+    echo "[Sirion] Menyalakan Nginx (Reverse Proxy)..."
+    nginx -t && nginx
+    ;;
+
+# ------------------------------------
+# Lindon (Web Statis)
+# ------------------------------------
+lindon)
+    echo "[Lindon] Menyalakan Nginx (Web Statis)..."
+    nginx -t && nginx
+    ;;
+
+# ------------------------------------
+# Vingilot (Web Dinamis PHP-FPM)
+# ------------------------------------
+vingilot)
+    echo "[Vingilot] Menyalakan PHP-FPM & Nginx..."
+    mkdir -p /var/run/php
+    php-fpm8.4 -D
+    nginx -t && nginx
+    ;;
+
+*)
+    echo "[!] Tidak ada konfigurasi autostart untuk hostname: $HOST"
+    ;;
+esac
+
+echo "[OK] Semua layanan inti ($HOST) aktif."
+```
+### ubah permission 
+```
+chmod +x /root/start-services.sh
+```
+### Jalankan otomatis saat WSL startup
+```
+echo "bash /root/start-services.sh" >> /etc/bash.bashrc
+```
+
+### TUTUP SEMUA WSL
+
+### start tirion
+
+### Untuk tirion/valmar
+```
+ps aux | grep named
+dig @localhost k06.com
+```
+### untuk sirion/lindon
+```
+ps aux | grep nginx
+curl http://www.k06.com/
+```
+### untuk vingilot
+```
+ps aux | grep php
+curl http://app.k06.com/
+```
+## Soal 18
+### DI TIRION
+nano /etc/bind/jarkom/k06.com
+
+### Tambahkan berikut
+```
+; The Enemy Has Many Names 😈
+melkor     IN  TXT     "Morgoth (Melkor)"
+morgoth    IN  CNAME   melkor.k06.com.
+```
+```
+### Naikkan serial pada file
+@ IN SOA ns1.k06.com. root.k06.com. (
+    2025101401 ; Serial naik setiap perubahan
+    604800     ; Refresh
+    86400      ; Retry
+    2419200    ; Expire
+    604800 )   ; Negative Cache TTL
+;
+```
+### Validasi Konfig
+```
+named-checkzone k06.com /etc/bind/jarkom/k06.com
+```
+### kalau oke restart bind
+```
+pkill named
+named -c /etc/bind/named.conf -g &
+```
+### sinkronasi di valmar
+```
+dig @192.214.3.4 melkor.k06.com TXT
+```
+### Verifikasi dari Klien (misal Elwing)
+```
+dig @192.214.3.3 melkor.k06.com TXT
+```
+### hasil yang benar:
+```
+;; ANSWER SECTION:
+melkor.k06.com.   604800  IN  TXT  "Morgoth (Melkor)"
+```
+### cek alias cname
+```
+dig @192.214.3.3 morgoth.k06.com TXT
+```
+### Hasil yang benar:
+```
+;; ANSWER SECTION:
+morgoth.k06.com.  604800  IN  CNAME  melkor.k06.com.
+melkor.k06.com.   604800  IN  TXT    "Morgoth (Melkor)"
+```
+## Soal 19
+### Edit File Zona di Tirion
+```
+nano /etc/bind/jarkom/k06.com
+```
+### Lalu tambahkan satu baris CNAME baru di bagian bawah file (setelah record sebelumnya seperti morgoth):
+```
+; Tambahan untuk soal Pelabuhan Diperluas
+havens     IN  CNAME  www.k06.com.
+```
+### Cari baris SOA di atas:
+```
+@ IN SOA ns1.k06.com. root.k06.com. (
+    2025101401 ; Serial
+```
+### Naikkan
+```
+2025101501 ; Serial (update untuk havens)
+```
+### Cek syntax
+```
+named-checkzone k06.com /etc/bind/jarkom/k06.com
+```
+### Kalau hasilnya
+```
+zone k06.com/IN: loaded serial 2025101501
+OK
+```
+### Maka restart bind (ingat: di WSL pakai named langsung):
+```
+pkill named
+named -c /etc/bind/named.conf -g &
+```
+### Sinkronisasi ke Slave (Valmar)
+```
+ls -l /var/lib/bind/k06.com
+```
+## Soal 20
+### Konfigurasi di Sirion (Reverse Proxy)
+```
+nano /etc/nginx/sites-available/www.k06.com
+```
+### Konfig
+``` 
+# ===============================
+# Redirect dari IP & sirion.<xxxx>.com → www.<xxxx>.com
+# ===============================
+server {
+    listen 80;
+    server_name 192.214.3.2 sirion.k06.com;
+    return 301 http://www.k06.com$request_uri;
+}
+
+# ===============================
+# Server utama (www.k06.com)
+# ===============================
+server {
+    listen 80;
+    server_name www.k06.com;
+
+    # ======= Halaman Depan =======
+    location = / {
+        default_type text/html;
+        return 200 "<h1>War of Wrath: Lindon bertahan</h1>
+        <a href='/app/'>Go to App</a><br>
+        <a href='/static/'>Go to Static</a>";
+    }
+
+    # ======= Rute ke Aplikasi Dinamis (Vingilot) =======
+    location /app/ {
+        proxy_pass http://192.214.3.6/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # ======= Rute ke Aplikasi Statis (Lindon) =======
+    location /static/ {
+        proxy_pass http://192.214.3.5/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # ======= Admin (Basic Auth) =======
+    location = /admin {
+        return 301 /admin/;
+    }
+
+    location /admin/ {
+        auth_basic "Restricted Area";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        root /var/www/html;
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+### Aktifkan & Reload Nginx
+```
+ln -sf /etc/nginx/sites-available/www.k06.com /etc/nginx/sites-enabled/
+nginx -t
+nginx -s reload
+```
+### Output yang benar
+```
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+### Verifikasi dari Seluruh Klien
+```
+cat /etc/resolv.conf
+```
+### Hasilnya harus mengarah ke:
+```
+nameserver 192.214.3.3
+nameserver 192.214.3.4
+```
+### Uji dari Elwing
+```
+ping -c 3 www.k06.com
+curl http://www.k06.com/
+curl http://www.k06.com/app/
+curl http://www.k06.com/static/
+```
+### Uji dari Earendil
+```
+ping -c 3 www.k06.com
+curl http://www.k06.com/
+curl http://www.k06.com/app/
+curl http://www.k06.com/static/
+```
+
+### Verifikasi dari Dua Klien
+```
+dig @192.214.3.3 havens.k06.com
+```
+### Hasil yang benar
+```
+;; ANSWER SECTION:
+havens.k06.com.   604800  IN  CNAME  www.k06.com.
+www.k06.com.      604800  IN  CNAME  sirion.k06.com.
+sirion.k06.com.   604800  IN  A      192.214.3.2
+```
+### Uji akses HTTP:
+```
+curl http://havens.k06.com/
+```
+### Hasilnya harus sama seperti:
+```
+<h1>War of Wrath: Lindon bertahan</h1>
+<a href='/app/'>Go to App</a><br><a href='/static/'>Go to Static</a><br><a href='/admin/'>Admin</a>
+```
+### Di Klien 2 (Earendil)
+```
+dig @192.214.3.3 havens.k06.com
+curl http://havens.k06.com/
+```
+
+### Verifikasi Routing Aplikasi
+```
+curl http://havens.k06.com/app/
+curl http://havens.k06.com/static/
+curl -I http://havens.k06.com/admin/
+```
