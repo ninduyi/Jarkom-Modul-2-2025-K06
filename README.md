@@ -1518,4 +1518,5 @@ dig static.k06.com
     # -------------------------------
     access_log /var/log/nginx/app.k06.com.access.log;
     error_log /var/log/nginx/app.k06.com.error.log;
-}
+    }
+```
