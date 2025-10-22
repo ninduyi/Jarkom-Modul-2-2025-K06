@@ -4,7 +4,7 @@
 apt-get update && apt-get install bind9 -y
 
 # Buat Symbolic Link (Pencegahan Error)
-ln -s /etc/init.d/named /etc/init.d/bind9
+    ln -s /etc/init.d/named /etc/init.d/bind9
 
 # Konfigurasi named.conf.local
 nano /etc/bind/named.conf.local
@@ -92,7 +92,28 @@ dig @192.214.3.3 k06.com
 dig @192.214.3.4 k06.com
 
 
+UJI
+Tirion Master Test
+dig @localhost k02.com SOA image
 
+dig @localhost ns1.k02.com image
+
+dig @localhost ns2.k02.com image
+
+Valmar Slave Test
+ls /var/lib/bind/
+image
+
+dig @localhost k02.com SOA image
+
+dig @localhost ns1.k02.com image
+
+dig @localhost ns2.k02.com image
+
+Client Test Query DNS Internal (contoh: Earendil)
+dig @192.212.3.11 k02.com image
+
+dig @192.212.3.12 www.k02.com 
 
 
 
