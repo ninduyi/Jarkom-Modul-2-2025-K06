@@ -387,23 +387,28 @@ Flag **aa** (authoritative answer) menandakan jawaban otoritatif dari master.
 
 **Apex ke Slave (ns2/Valmar)**
 ```bash
-dig @192.214.3.4 k06.com +noall +answer +authority +additional
+dig @192.214.3.4 k06.com 
 ```
 Keluaran harus identik pada **ANSWER SECTION** dan memuat flag **aa** juga—ini membuktikan zone transfer sukses.
 
 **NS & glue check**
 ```bash
-dig @192.214.3.3 NS k06.com +noall +answer
-dig @192.214.3.4 NS k06.com +noall +answer
+dig @192.214.3.3 NS k06.com 
+dig @192.214.3.4 NS k06.com 
 ```
-Harus menampilkan **ns1.k06.com** dan **ns2.k06.com**, dan query A untuk **ns1/ns2** mengarah ke **192.214.3.3/192.214.3.4**.
+![](/images/4a.jpg)
 
-**Forwarder eksternal (sanity check)**
-```bash
-dig @192.214.3.3 google.com A +short
-dig @192.214.3.4 google.com A +short
-```
-Jika alamat IP publik Google muncul, forwarder berfungsi.
+**Gambar Pertama (dig ke Master - Tirion):**
+- status: NOERROR dan flags: aa menunjukkan Tirion (Master) menjawab dengan benar dan otoritatif.
+- ANSWER SECTION mengkonfirmasi k06.com mengarah ke IP 192.214.3.2.
+
+![](/images/4b.jpg)
+
+**Gambar Kedua (dig ke Slave - Valmar):**
+- status: NOERROR dan flags: aa menunjukkan Valmar (Slave) juga menjawab dengan benar dan otoritatif.
+- ANSWER SECTION menunjukkan data yang sama persis dengan Tirion.
+
+Ini membuktikan bahwa server DNS Master dan Slave Anda telah berjalan dengan baik, dan proses zone transfer (sinkronisasi data) dari Tirion ke Valmar telah berhasil. 
 
 ---
 

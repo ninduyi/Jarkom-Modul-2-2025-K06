@@ -94,24 +94,24 @@ dig @192.214.3.4 k06.com
 
 UJI
 Tirion Master Test
-dig @localhost k02.com SOA image
+dig @localhost k02.com SOA
 
-dig @localhost ns1.k02.com image
+dig @localhost ns1.k02.com
 
-dig @localhost ns2.k02.com image
+dig @localhost ns2.k02.com
 
-Valmar Slave Test
+# Valmar Slave Test
 ls /var/lib/bind/
-image
 
-dig @localhost k02.com SOA image
 
-dig @localhost ns1.k02.com image
+dig @localhost k02.com SOA
 
-dig @localhost ns2.k02.com image
+dig @localhost ns1.k02.com
 
-Client Test Query DNS Internal (contoh: Earendil)
-dig @192.212.3.11 k02.com image
+dig @localhost ns2.k02.com
+
+# Client Test Query DNS Internal (contoh: Earendil)
+dig @192.212.3.11 k02.com 
 
 dig @192.212.3.12 www.k02.com 
 
