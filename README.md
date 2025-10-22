@@ -1471,7 +1471,7 @@ dig @192.214.3.4 lindon.k06.com
 dig static.k06.com
 ```
 
-##Soal 17
+## Soal 17
 ### buat file
 nano /root/start-services.sh
 
