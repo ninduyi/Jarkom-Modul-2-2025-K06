@@ -26,8 +26,13 @@ server {
         proxy_pass http://192.214.3.5/;  # IP Lindon
         # PENTING: Ubah Host header agar Lindon menerima permintaan ini
         proxy_set_header Host static.k06.com;
+<<<<<<< HEAD
     }curl http://www.k06.com/static/
     curl http://www.k06.com/app/
+=======
+    }
+
+>>>>>>> 30b68af4e6ef45722cb3a5bddedbad7bb0af910f
 
     # Forward permintaan /app/ ke Vingilot
     location /app/ {
