@@ -828,6 +828,7 @@ Buka terminal di salah satu klien (misalnya, **Earendil**) dan gunakan **curl** 
 # Di terminal Earendil
 curl http://static.k06.com/annal
 ```
+<img width="1489" height="268" alt="image" src="https://github.com/user-attachments/assets/075a0d93-1089-4dd5-a417-001320a67a87" />
 
 ---
 
@@ -964,6 +965,10 @@ Menguji apakah aturan **URL Rewrite** berfungsi dengan benar.
 curl http://192.214.3.6/
 ```
 Menguji apakah blok server default berhasil memblokir akses via IP langsung, sesuai dengan persyaratan keamanan.
+
+<img width="955" height="217" alt="image" src="https://github.com/user-attachments/assets/4dade664-9ab5-4123-9d60-2aff5ed9353f" />
+<img width="1659" height="100" alt="image" src="https://github.com/user-attachments/assets/a2b5a102-37fe-40dc-bb91-4b1336873fbc" />
+
 
 ## Soal 11
 Di muara sungai, Sirion berdiri sebagai reverse proxy. Terapkan path-based routing: /static → Lindon dan /app → Vingilot, sambil meneruskan header Host dan X-Real-IP ke backend. Pastikan Sirion menerima www.<xxxx>.com (kanonik) dan sirion.<xxxx>.com, dan bahwa konten pada /static dan /app di-serve melalui backend yang tepat.
@@ -1177,6 +1182,10 @@ HTTP/1.1 200 OK
 <h1>Welcome, Administrator</h1>
 ```
 
+Tanpa login:
+<img width="663" height="411" alt="image" src="https://github.com/user-attachments/assets/6e096e21-439b-4ee7-8b6e-4957ffbb584c" />
+Dengan login:
+<img width="826" height="291" alt="image" src="https://github.com/user-attachments/assets/4ac75261-775e-4127-9486-75ebf4b065c9" />
 
 
 ---
@@ -1278,6 +1287,11 @@ Output:
 ```
 HTTP/1.1 200 OK
 ```
+<img width="567" height="215" alt="image" src="https://github.com/user-attachments/assets/75c009b7-a3d2-4ee7-9276-40066b9c7967" />
+<img width="590" height="206" alt="image" src="https://github.com/user-attachments/assets/4973f44d-d767-4c91-9803-bcba0de7b209" />
+<img width="574" height="181" alt="image" src="https://github.com/user-attachments/assets/1d1aacec-9c25-4b3c-b1dd-a39f438290c1" />
+
+
 
 ## Soal 14
 ### Konfigurasi di Sirion (Reverse Proxy)
@@ -1417,6 +1431,8 @@ Time per request:       30.86 [ms] (mean)
 Transfer rate:          60.23 [Kbytes/sec] received
 
 ```
+<img width="901" height="475" alt="image" src="https://github.com/user-attachments/assets/1fa14ef9-7682-410b-940b-6c2e76a66d5c" />
+
 
 ## Soal 16
 ### DI TIRION
@@ -1481,6 +1497,8 @@ dig @192.214.3.4 lindon.k06.com
 ```
 dig static.k06.com
 ```
+<img width="792" height="88" alt="image" src="https://github.com/user-attachments/assets/0e32b91a-ab92-40fd-9248-cbf2f357c28b" />
+
 
 ## Soal 17
 ### buat file
@@ -1547,6 +1565,7 @@ vingilot)
 esac
 
 echo "[OK] Semua layanan inti ($HOST) aktif."
+
 ```
 ### ubah permission 
 ```
@@ -1576,6 +1595,8 @@ curl http://www.k06.com/
 ps aux | grep php
 curl http://app.k06.com/
 ```
+<img width="1310" height="536" alt="image" src="https://github.com/user-attachments/assets/ac70a4f0-3fca-4a24-b815-97781f5aa5e4" />
+
 ## Soal 18
 ### DI TIRION
 nano /etc/bind/jarkom/k06.com
