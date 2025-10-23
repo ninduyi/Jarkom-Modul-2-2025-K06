@@ -1649,6 +1649,8 @@ dig @192.214.3.3 morgoth.k06.com TXT
 morgoth.k06.com.  604800  IN  CNAME  melkor.k06.com.
 melkor.k06.com.   604800  IN  TXT    "Morgoth (Melkor)"
 ```
+<img width="824" height="207" alt="image" src="https://github.com/user-attachments/assets/59cd1dd9-1da8-4a98-a185-5f1b42fc2058" />
+
 ## Soal 19
 ### Edit File Zona di Tirion
 ```
@@ -1686,6 +1688,8 @@ named -c /etc/bind/named.conf -g &
 ```
 ls -l /var/lib/bind/k06.com
 ```
+<img width="774" height="113" alt="image" src="https://github.com/user-attachments/assets/9bfdae18-8707-43aa-aba9-0e489ed58616" />
+
 ## Soal 20
 ### Konfigurasi di Sirion (Reverse Proxy)
 ```
