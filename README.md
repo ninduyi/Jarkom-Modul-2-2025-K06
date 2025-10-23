@@ -485,6 +485,8 @@ PING sirion.k06.com (192.214.3.2) 56(84) bytes of data.
 ```
 Hasil ping ke alamat IP internal yang benar (192.214.3.2) membuktikan bahwa klien berhasil menggunakan DNS internal untuk me-resolve nama host dan terhubung ke server yang dituju.
 
+![](/images/5.png)
+
 ---
 
 ## Soal 6
@@ -605,6 +607,7 @@ Jika nomor serial pada output di Tirion dan Valmar **SAMA**, maka Anda telah ber
 
 Ini menandakan bahwa sistem DNS Anda sudah **resilient**, di mana server cadangan (**Valmar**) selalu memiliki data yang sinkron dengan server utama (**Tirion**).
 
+![](/images/7.png)
 
 ---
 
@@ -726,6 +729,8 @@ Hasilnya harus menunjuk ke lindon.k06.com..
 dig -x 192.214.3.6
 ```
 Hasilnya harus menunjuk ke vingilot.k06.com..
+
+![](/images/8.png)
 
 ---
 
